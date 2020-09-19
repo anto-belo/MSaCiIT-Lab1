@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="700.0" style="-fx-background-color: #fff;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.controller.MainController">
    <ImageView fitHeight="500.0" fitWidth="700.0" pickOnBounds="true" preserveRatio="true">
@@ -13,25 +18,37 @@
       <Image url="@../assets/main_logo.png" />
    </ImageView>
    <AnchorPane fx:id="metricsPane" layoutX="354.0" layoutY="17.0" prefHeight="468.0" prefWidth="330.0" visible="false">
-      <TableView fx:id="operatorsTable" prefHeight="430.0" prefWidth="330.0" styleClass="metricsTable" stylesheets="@../css/TRLBlackBorder.css">
+      <TableView fx:id="operatorsTable" prefHeight="430.0" prefWidth="330.0" styleClass="metricsTable">
          <columns>
             <TableColumn fx:id="numOperatorColumn" prefWidth="75.0" resizable="false" text="№" />
             <TableColumn fx:id="nameOperatorColumn" prefWidth="180.0" resizable="false" text="Operator" />
             <TableColumn fx:id="quantityOperatorColumn" prefWidth="75.0" resizable="false" text="Quantity" />
          </columns>
+         <stylesheets>
+            <URL value="@../css/TRLBlackBorder.css" />
+            <URL value="@../css/noScrolling.css" />
+         </stylesheets>
       </TableView>
-      <TableView fx:id="operandsTable" prefHeight="430.0" prefWidth="330.0" styleClass="metricsTable" stylesheets="@../css/TRLBlackBorder.css">
+      <TableView fx:id="operandsTable" prefHeight="430.0" prefWidth="330.0" styleClass="metricsTable">
          <columns>
             <TableColumn fx:id="numOperandColumn" prefWidth="75.0" resizable="false" text="№" />
             <TableColumn fx:id="nameOperandColumn" prefWidth="180.0" resizable="false" text="Operand" />
             <TableColumn fx:id="quantityOperandColumn" prefWidth="75.0" resizable="false" text="Quantity" />
          </columns>
+         <stylesheets>
+            <URL value="@../css/TRLBlackBorder.css" />
+            <URL value="@../css/noScrolling.css" />
+         </stylesheets>
       </TableView>
-      <TableView fx:id="additionalInfoTable" prefHeight="430.0" prefWidth="330.0" styleClass="metricsTable" stylesheets="@../css/TRLBlackBorder.css">
+      <TableView fx:id="additionsTable" prefHeight="430.0" prefWidth="330.0" styleClass="metricsTable">
          <columns>
-            <TableColumn fx:id="keyInfoColumn" prefWidth="165.0" resizable="false" text="Additional Info" />
-            <TableColumn fx:id="valueInfoColumn" prefWidth="165.0" resizable="false" text="Value" />
+            <TableColumn fx:id="keyAdditionColumn" prefWidth="230.0" resizable="false" text="Addition" />
+            <TableColumn fx:id="valueAdditionColumn" prefWidth="100.0" resizable="false" text="Value" />
          </columns>
+         <stylesheets>
+            <URL value="@../css/TRLBlackBorder.css" />
+            <URL value="@../css/noScrolling.css" />
+         </stylesheets>
       </TableView>
       <Button fx:id="prevButton" layoutY="430.0" mnemonicParsing="false" prefHeight="38.0" prefWidth="165.0" style="-fx-background-color: #192BC2; -fx-background-radius: 0 0 0 10; -fx-border-color: #000 #fff #000 #000; -fx-border-width: 0 1 1 1; -fx-border-radius: 0 0 0 10;" text="Previous" textFill="WHITE">
          <font>
@@ -56,6 +73,11 @@
       </font>
    </Button>
    <Button fx:id="loadButton" layoutX="124.0" layoutY="447.0" mnemonicParsing="false" prefHeight="38.0" prefWidth="110.0" style="-fx-background-color: #192BC2; -fx-background-radius: 0 0 0 0; -fx-border-color: #000 #fff #000 #fff; -fx-border-width: 0 1 1 1; -fx-border-radius: 0 0 0 0;" text="Load" textFill="WHITE">
+      <font>
+         <Font name="Corbel" size="20.0" />
+      </font>
+   </Button>
+   <Button fx:id="warningNote" layoutX="390.0" layoutY="34.0" mnemonicParsing="false" style="-fx-background-color: #FF4E00; -fx-background-radius: 20;" text="Insert code or load code file!" textFill="WHITE" visible="false">
       <font>
          <Font name="Corbel" size="20.0" />
       </font>

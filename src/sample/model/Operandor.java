@@ -1,12 +1,16 @@
 package sample.model;
 
+import static sample.controller.MainController.operands;
+import static sample.controller.MainController.operators;
+
 public class Operandor {
 
-    private int num;
-    private String name;
+    private final int num;
+    private final String name;
     private int quantity;
-    private static int currentOperandNumber;
-    private static int currentOperatorNumber;
+
+    public static int currentOperandNumber;
+    public static int currentOperatorNumber;
 
     public Operandor(int num, String name, int quantity) {
         this.num = num;
@@ -18,23 +22,29 @@ public class Operandor {
         return num;
     }
 
-    public void setNum(int num) {
-        this.num = num;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public int getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    public static void addOperator(String name) {
+        for (Operandor operator : operators)
+            if (name.equals(operator.name)) {
+                operator.quantity++;
+                return;
+            }
+        operators.add(new Operandor(++currentOperatorNumber, name, 1));
+    }
+
+    public static void addOperand(String name) {
+        for (Operandor operand : operands)
+            if (name.equals(operand.name)) {
+                operand.quantity++;
+                return;
+            }
+        operands.add(new Operandor(++currentOperandNumber, name, 1));
     }
 }

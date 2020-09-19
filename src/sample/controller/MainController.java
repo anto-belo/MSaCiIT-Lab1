@@ -1,25 +1,29 @@
 package sample.controller;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
-import sample.model.Additional;
+import javafx.util.Duration;
+import sample.model.Addition;
 import sample.model.Operandor;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
+import static sample.Engine.analyze;
 import static sample.Main.primaryStage;
+import static sample.model.Operandor.currentOperandNumber;
+import static sample.model.Operandor.currentOperatorNumber;
 
 public class MainController {
 
@@ -51,13 +55,13 @@ public class MainController {
     private TableColumn<Operandor, String> quantityOperandColumn;
 
     @FXML
-    private TableView<Additional> additionalInfoTable;
+    private TableView<Addition> additionsTable;
 
     @FXML
-    private TableColumn<Additional, String> keyInfoColumn;
+    private TableColumn<Addition, String> keyAdditionColumn;
 
     @FXML
-    private TableColumn<Additional, String> valueInfoColumn;
+    private TableColumn<Addition, String> valueAdditionColumn;
 
     @FXML
     private Button prevButton;
@@ -77,29 +81,32 @@ public class MainController {
     @FXML
     private Button loadButton;
 
+    @FXML
+    private Button warningNote;
+
     private int metricsPointer;
 
-    private ArrayList<String> code;
+    public ArrayList<String> code;
 
-    private ArrayList<Operandor> operators;
+    public static ArrayList<Operandor> operators;
 
-    private ArrayList<Operandor> operands;
+    public static ArrayList<Operandor> operands;
 
-    private ArrayList<Additional> additions;
+    public static ArrayList<Addition> additions;
 
     @FXML
     void initialize() {
 
         analyzeButton.setOnAction(actionEvent -> {
-            fillOperatorsTable();
-            fillOperandsTable();
-            fillAdditionalTable();
-
-            operatorsTable.setVisible(true);
-            operandsTable.setVisible(false);
-            additionalInfoTable.setVisible(false);
-            metricsPane.setVisible(true);
-            metricsPointer = 0;
+            currentOperatorNumber = currentOperandNumber = 0;
+            getCodeList();
+            if (code.size() == 1 && code.get(0).equals("")) {
+                metricsPane.setVisible(false);
+                showWarning();
+                return;
+            }
+            analyze();
+            showAnalysis();
         });
 
         loadButton.setOnAction(actionEvent -> {
@@ -110,14 +117,33 @@ public class MainController {
             }
         });
 
-        clearButton.setOnAction(actionEvent -> {
-            codeInput.setText("");
-            metricsPane.setVisible(false);
-        });
+        clearButton.setOnAction(actionEvent -> clearWindow());
 
         prevButton.setOnAction(actionEvent -> turnMetricsTable(false));
 
         nextButton.setOnAction(actionEvent -> turnMetricsTable(true));
+    }
+
+    private void showAnalysis() {
+        fillOperatorsTable();
+        fillOperandsTable();
+        fillAdditionalTable();
+
+        operatorsTable.setVisible(true);
+        operandsTable.setVisible(false);
+        additionsTable.setVisible(false);
+        metricsPane.setVisible(true);
+        metricsPointer = 0;
+    }
+
+    private void clearWindow() {
+        code = null;
+        operators = null;
+        operands = null;
+        additions = null;
+
+        codeInput.setText("");
+        metricsPane.setVisible(false);
     }
 
     private void turnMetricsTable(boolean dest) {
@@ -131,19 +157,19 @@ public class MainController {
             case 0: {
                 operatorsTable.setVisible(true);
                 operandsTable.setVisible(false);
-                additionalInfoTable.setVisible(false);
+                additionsTable.setVisible(false);
                 break;
             }
             case 1: {
                 operatorsTable.setVisible(false);
                 operandsTable.setVisible(true);
-                additionalInfoTable.setVisible(false);
+                additionsTable.setVisible(false);
                 break;
             }
             case 2: {
                 operatorsTable.setVisible(false);
                 operandsTable.setVisible(false);
-                additionalInfoTable.setVisible(true);
+                additionsTable.setVisible(true);
                 break;
             }
         }
@@ -169,6 +195,10 @@ public class MainController {
         fr.close();
     }
 
+    private void getCodeList() {
+        code = new ArrayList<>(Arrays.asList(codeInput.getText().split("\n")));
+    }
+
     private void loadCodeFile() throws IOException {
         File file = getCodeFile();
         if (file == null) return;
@@ -180,9 +210,9 @@ public class MainController {
     }
 
     private void fillAdditionalTable() {
-        additionalInfoTable.setItems(getObservableList(additions));
-        keyInfoColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
-        valueInfoColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+        additionsTable.setItems(getObservableList(additions));
+        keyAdditionColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
+        valueAdditionColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
     }
 
     private void fillOperatorsTable() {
@@ -202,8 +232,12 @@ public class MainController {
     private <E> ObservableList<E> getObservableList(ArrayList<E> list) {
         ObservableList<E> observableList = FXCollections.observableArrayList();
         observableList.setAll(list);
-        /*for (int i = 0; i < code.size(); i++)
-            observableList.add(i,code.get(i));*/
         return observableList;
+    }
+
+    private void showWarning() {
+        warningNote.setVisible(true);
+        Timeline delay = new Timeline(new KeyFrame(Duration.seconds(2), actionEvent -> warningNote.setVisible(false)));
+        delay.play();
     }
 }

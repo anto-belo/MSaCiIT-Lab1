@@ -1,0 +1,6 @@
+.metricsTable .scroll-bar:horizontal .increment-arrow,
+.metricsTable .scroll-bar:horizontal .decrement-arrow,
+.metricsTable .scroll-bar:horizontal .increment-button,
+.metricsTable .scroll-bar:horizontal .decrement-button {
+    -fx-padding:0;
+}
