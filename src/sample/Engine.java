@@ -13,15 +13,17 @@ public class Engine {
         operands = new ArrayList<>();
         additions = new ArrayList<>();
 
+
+
+        // Put here analyze logic. Input code is in the Arraylist<String> code
+        // Arraylists "operators", "operands" must be fulfilled here by next methods:
+        // addOperator(String operatorName);
+        // addOperand(String operandName).
+        // For example:
         addOperator("&");
-        addOperator("&");
-        addOperator("$");
         addOperand("a");
-        addOperand("a");
-        addOperand("b");
-        addOperand("a");
-        //Put here analyze logic...
-        //Arraylists "operators", "operands" must be fulfilled here
+
+
 
         createAdditions();
     }
