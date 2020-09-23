@@ -86,7 +86,7 @@ public class MainController {
 
     private int metricsPointer;
 
-    public ArrayList<String> code;
+    public static ArrayList<String> code;
 
     public static ArrayList<Operandor> operators;
 
@@ -205,6 +205,7 @@ public class MainController {
 
         getCodeList(file);
 
+        codeInput.clear();
         for (String line : code)
             codeInput.appendText(line + "\n");
     }
