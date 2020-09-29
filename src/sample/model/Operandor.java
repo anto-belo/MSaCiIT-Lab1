@@ -31,6 +31,7 @@ public class Operandor {
     }
 
     public static void addOperator(String name) {
+        System.out.println("Operator " + name + " added.");
         for (Operandor operator : operators)
             if (name.equals(operator.name)) {
                 operator.quantity++;
@@ -40,6 +41,7 @@ public class Operandor {
     }
 
     public static void addOperand(String name) {
+        System.out.println("Operand " + name + " added.");
         for (Operandor operand : operands)
             if (name.equals(operand.name)) {
                 operand.quantity++;

@@ -10,55 +10,97 @@ import static sample.model.Operandor.addOperator;
 public class Engine {
 
     private static final String[] allOperators = {"+", "+=", "-", "-=", "*", "*=", "/", "/=", "%", "%=", "++", "--",
-                                                  "<", "<=", ">", ">=", "==", "!=", /*?*/".", ",", ";", "(", ")", "=",
-                                                  "&", "&=", "|", "|=", "~", "^", "^=", ">>", ">>=", "<<", "<<=", ">>>",
-                                                  "&&", "||", "!", "{", "}", "instanceof", "break", "continue",
-                                                  "switch", "if", "do", "while", "for", "return", "?"};
+            "<", "<=", ">", ">=", "==", "!=", /*?*/".", ",", ";", "(", ")", "=", "&", "&=", "|", "|=", "~", "^", "^=",
+            ">>", ">>=", "<<", "<<=", ">>>", "&&", "||", "!", "{", "}", "instanceof", "break", "continue", "switch",
+            "if", "do", "while", "for", "return", "?"};
 
     private static final String[] otherReservedWords = {"byte", "short", "int", "long", "char", "float", "double",
-                                                        "boolean", "else", "case", "default", "try", "catch", "finally",
-                                                        "throw", "throws", "private", "protected", "public", "import",
-                                                        "package", "class", "interface", "extends", "implements",
-                                                        "static", "final", "void", "abstract", "native", "new", "this",
-                                                        "super", "synchronized", "volatile", "const", "goto", "enum",
-                                                        "assert", "transient", "strictfp"};
+            "boolean", "else", "case", "default", "try", "catch", "finally", "throw", "throws", "private", "protected",
+            "public", "import", "package", "class", "interface", "extends", "implements", "static", "final", "void",
+            "abstract", "native", "new", "this", "super", "synchronized", "volatile", "const", "goto", "enum", "assert",
+            "transient", "strictfp"};
 
-    private static final String[] methodSigns = {"private", "protected", "public", "static", "final", "abstract",
-                                                 "native", "strictfp"};
+    private static final String[] methodHeaderSigns = {"private", "protected", "public", "static", "final", "abstract",
+            "native", "strictfp"};
 
     public static void analyze() {
         operators = new ArrayList<>();
         operands = new ArrayList<>();
         additions = new ArrayList<>();
 
+
         boolean skip = false;
+        int lineNo = 1;
         coder:
         for (String codeLine : code) {
+            /* Проверка наличия содержимого строки */
+            System.out.println("Line " + lineNo++ + ":");
             codeLine = codeLine.trim();
             if (codeLine.equals("")) continue;
 
-            if (isMethodHeader(codeLine)) {
+            /* Удаление всех кавычек и содержимого между ними */
+            while (codeLine.contains("\"")) {
+                int textBegin = codeLine.indexOf("\"");
+                int textEnd = codeLine.indexOf("\"", textBegin + 1) + 1;
+                codeLine = codeLine.substring(0, textBegin) +
+                        codeLine.substring(textEnd);
+            }
+
+            /* Распознавание заголовка функции или её вызова */
+            boolean header;
+            if ((header = isMethodHeader(codeLine)) || isMethodCall(codeLine)) {
                 getMethodArgs(codeLine);
+                if (header) addOperator("{");
                 continue;
             }
-            for (String member : codeLine.trim().split(" ")) {
+
+            /* Все остальные случаи (начало распознавания отдельных слов) */
+            for (String member : codeLine.split(" ")) {
+                /* Пропуск слова после instanceof или class */
                 if (skip) {
                     skip = false;
                     continue;
                 }
 
-                if (member.equals("import") || member.equals("package")) continue coder;
-                else if (member.equals("class")) {
-                    skip = true;
-                    continue;
+                /* Частные случаи */
+                switch (member) {
+                    case "import":
+                    case "package":
+                        continue coder;
+                    case "instanceof":
+                        addOperator("instanceof");
+//                        skip = true;
+//                        continue;
+                    case "class":
+                        skip = true;
+                        continue;
                 }
 
-                String operator;
-                if (isInside(member, allOperators))
+                /* Общий случай */
+                String operator = null;
+                /* Проверка на оператор */
+                if (isBelongsTo(member, allOperators)) {
                     addOperator(member);
-                else if (!isInside(member, otherReservedWords) && (operator = tryToFindOperator(member)) != null)
+                    continue;
+                }
+                /* 2-я попытка найти оператор в слове */
+                else if (!isBelongsTo(member, otherReservedWords) && (operator = tryToFindOperator(member)) != null) {
                     addOperator(operator);
-                else if (!isInside(member, otherReservedWords))
+                    if (operator.equals("(")) member = member.substring(1);
+                    while (member.startsWith("(")) {
+                        member = member.substring(1);
+                        addOperator("(");
+                    }
+                    if (operator.equals(")")) member = member.substring(0, member.length() - 1);
+                    while (member.startsWith(")")) {
+                        member = member.substring(0, member.length() - 1);
+                        addOperator(")");
+                    }
+                }
+//                if (member.startsWith("(") && operator != null) member = member.substring(1);
+//                else if (operator != null) member = member.substring(0, member.length() - 1);
+                if (!isBelongsTo(member, otherReservedWords) && !isBelongsTo(member, allOperators) &&
+                        !member.equals("true") && !member.equals("false"))
                     addOperand(member);
             }
         }
@@ -68,18 +110,26 @@ public class Engine {
     }
 
     private static String tryToFindOperator(String member) {
-        return null;
+        if (member.endsWith(";")) return ";";
+        if (member.endsWith(",")) return ",";
+        if (member.endsWith(")")) return ")";
+        if (member.startsWith("(")) return "(";
+        if (member.endsWith(":"))
+            member = member.substring(0, member.length() - 1);
+        if (isBelongsTo(member, allOperators)) return member;
+        else return null;
     }
 
     private static boolean isMethodHeader(String codeLine) {
         String[] lineMembers = codeLine.split(" ");
-        if (lineMembers.length < 2 || !codeLine.contains("(") || !codeLine.contains(")")) return false;
+        if (lineMembers.length < 2 || !codeLine.contains("(") ||
+                !codeLine.contains(")") || lineMembers[0].contains("(")) return false;
         boolean returnTypeDeclared = false;
         boolean paramsOpen = false;
         boolean operandDeclared = false;
         boolean methodOpened = false;
         for (String lineMember : lineMembers) {
-            if (!isInside(lineMember, methodSigns)) {
+            if (!isBelongsTo(lineMember, methodHeaderSigns)) {
                 if (!returnTypeDeclared)
                     returnTypeDeclared = true;
                 else if (lineMember.contains("(") && !paramsOpen)
@@ -98,45 +148,27 @@ public class Engine {
         return true;
     }
 
+    private static boolean isMethodCall(String codeLine) {
+        boolean methodNameexists = false;
+        if (!codeLine.contains("(") || !codeLine.contains(")")) return false;
+        for (String word : codeLine.split(" ")) {
+            if (word.endsWith("(")) methodNameexists = true;
+            if (isBelongsTo(word, methodHeaderSigns)) return false;
+        }
+        return methodNameexists;
+    }
+
     private static void getMethodArgs(String codeLine) {
-        String[] args = codeLine.substring(codeLine.indexOf('(') + 1, codeLine.indexOf(')')).split(" ");
+        String[] args = codeLine.substring(codeLine.indexOf('(') + 1, codeLine.lastIndexOf(')')).split(" ");
         for (int i = 1; i < args.length; i += 2) {
             String operand = (args[i].charAt(args[i].length() - 1) == ',') ?
                     args[i].substring(0, args[i].length() - 1) : args[i];
-            addOperand(operand);
+            if (isMethodCall(operand)) getMethodArgs(operand);
+            else addOperand(operand);
         }
-        addOperator("{");
     }
-    /* TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST */
-    /*private static boolean tryParseMethodHeader(String codeLine) {
-        String[] lineMembers = codeLine.split(" ");
-        if (lineMembers.length < 2 || !codeLine.contains("(") || !codeLine.contains(")")) return false;
-        boolean returnTypeDeclared = false;
-        boolean paramsOpen = false;
-        boolean operandAdded = false;
-        for (String lineMember : lineMembers) {
-            if (!isInside(lineMember, methodSigns)) {
-                if (!returnTypeDeclared)
-                    returnTypeDeclared = true;
-                else if (lineMember.contains("(") && !paramsOpen)
-                    paramsOpen = true;
-                else if (paramsOpen && lineMember.charAt(lineMember.length() - 1) == ',') {
-                    addOperand(lineMember.substring(lineMember.length() - 1));
-                    operandAdded = true;
-                } else if (lineMember.contains(")") && paramsOpen) {
-                    addOperand(lineMember.substring(0, lineMember.length() - 1));
-                    paramsOpen = false;
-                } else if (operandAdded)
-                    operandAdded = false;
-                else if (lineMember.equals("{"))
-                    addOperator("{");
-                else return false;
-            }
-        }
-        return true;
-    }*/
 
-    private static boolean isInside(String x, String[] group) {
+    private static boolean isBelongsTo(String x, String[] group) {
         for (String groupMember : group)
             if (x.equals(groupMember)) return true;
         return false;
