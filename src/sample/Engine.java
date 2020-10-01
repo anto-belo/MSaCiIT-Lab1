@@ -9,9 +9,9 @@ import static sample.model.Operandor.addOperator;
 
 public class Engine {
 
-    private static final String[] allOperators = {"+", "+=", "-", "-=", "*", "*=", "/", "/=", "%", "%=", "++", "--",
-            "<", "<=", ">", ">=", "==", "!=", /*?*/".", ",", ";", "(", ")", "=", "&", "&=", "|", "|=", "~", "^", "^=",
-            ">>", ">>=", "<<", "<<=", ">>>", "&&", "||", "!", "{", "}", "instanceof", "break", "continue", "switch",
+    private static final String[] allOperators = {"+=", "++", "+", "-=", "--", "-", "*=", "*", "/=", "/", "%=", "%",
+            "&=", "&&", "&", "|=", "||", "|", "^=", "^", ">>=", ">>", "<<=", "<<", ">>>", "~", "<=", "<", ">=", ">",
+            "!=", "==", "=", ".", ",", ";", "(", ")", "!", "{", "}", "instanceof", "break", "continue", "switch",
             "if", "do", "while", "for", "return", "?"};
 
     private static final String[] otherReservedWords = {"byte", "short", "int", "long", "char", "float", "double",
@@ -28,15 +28,43 @@ public class Engine {
         operands = new ArrayList<>();
         additions = new ArrayList<>();
 
-
         boolean skip = false;
         int lineNo = 1;
-        coder:
+        nextLine:
         for (String codeLine : code) {
             /* Проверка наличия содержимого строки */
             System.out.println("Line " + lineNo++ + ":");
             codeLine = codeLine.trim();
             if (codeLine.equals("")) continue;
+
+
+            while (codeLine.contains("  "))
+                codeLine = codeLine.replaceAll("[ ][ ]", " ");
+
+            for (String word : codeLine.split(" ")) {
+                int start = 0;
+                String prevOperator = "";
+                for (String operator : allOperators) {
+                    if (prevOperator.contains(operator)) start += prevOperator.length();
+                    int index = word.indexOf(operator, start);
+                    if (index == -1) {
+                        start = 0;
+                        continue;
+                    }
+                    prevOperator = operator;
+                    String oldWord = word;
+                    if (word.startsWith(operator)) word = word.substring(0, operator.length()) + " "
+                                         + word.substring(operator.length());
+                    else if (word.endsWith(operator)) word = word.substring(0, index) + " "
+                                         + word.substring(index);
+                    //if (!word.startsWith(operator) && !word.endsWith(operator))
+                    else word = word.substring(0, index) + " "
+                              + word.substring(index, index + operator.length()) + " "
+                              + word.substring(index + operator.length());
+                    start = index + operator.length();
+                    codeLine = codeLine.replace(oldWord, word);
+                }
+            }
 
             /* Удаление всех кавычек и содержимого между ними */
             while (codeLine.contains("\"")) {
@@ -47,10 +75,11 @@ public class Engine {
             }
 
             /* Распознавание заголовка функции или её вызова */
-            boolean header;
-            if ((header = isMethodHeader(codeLine)) || isMethodCall(codeLine)) {
+            boolean header, call = false;
+            if ((header = isMethodHeader(codeLine)) || (call = isMethodCall(codeLine))) {
                 getMethodArgs(codeLine);
                 if (header) addOperator("{");
+                if (call) addOperator(";");
                 continue;
             }
 
@@ -66,18 +95,20 @@ public class Engine {
                 switch (member) {
                     case "import":
                     case "package":
-                        continue coder;
+                        addOperator(";");
+                        continue nextLine;
                     case "instanceof":
                         addOperator("instanceof");
 //                        skip = true;
 //                        continue;
                     case "class":
                         skip = true;
+                    case ":":
                         continue;
                 }
 
                 /* Общий случай */
-                String operator = null;
+                String operator;
                 /* Проверка на оператор */
                 if (isBelongsTo(member, allOperators)) {
                     addOperator(member);
@@ -96,11 +127,45 @@ public class Engine {
                         member = member.substring(0, member.length() - 1);
                         addOperator(")");
                     }
+                    if (member.endsWith(";") || member.endsWith(","))
+                        member = member.substring(0, member.length() - 1);
+
+                    for (String post : new String[]{"++", "--"})
+                        if (member.endsWith(post)) {
+                            addOperator(post);
+                            member = member.substring(0, member.length() - 2);
+                        }
+
+                    for (String pre : new String[]{"++", "--"})
+                        if (member.startsWith(pre)) {
+                            addOperator(pre);
+                            member = member.substring(2);
+                        }
+
+//                    if (member.endsWith("++")) {
+//                        addOperator("++");
+//                        member = member.substring(0, member.length() - 2);
+//                    } else if (member.endsWith("--")) {
+//                        addOperator("--");
+//                        member = member.substring(0, member.length() - 2);
+//                    } else if (member.startsWith("++")) {
+//                        addOperator("++");
+//                        member = member.substring(2);
+//                    } else if (member.startsWith("--")) {
+//                        addOperator("--");
+//                        member = member.substring(2);
+//                    }
+
+
+                    getFuncInFuncArgs(member);
+
+//                    if (member.startsWith("(")) member = member.substring(1);
+//                    else member = member.substring(0, member.length() - 1);
                 }
-//                if (member.startsWith("(") && operator != null) member = member.substring(1);
-//                else if (operator != null) member = member.substring(0, member.length() - 1);
-                if (!isBelongsTo(member, otherReservedWords) && !isBelongsTo(member, allOperators) &&
-                        !member.equals("true") && !member.equals("false"))
+                if (member.endsWith(":")) member = member.substring(0, member.length() - 1);
+                if (isBelongsTo(member, allOperators))
+                    addOperator(member);
+                else if (!isBelongsTo(member, otherReservedWords))
                     addOperand(member);
             }
         }
@@ -109,10 +174,20 @@ public class Engine {
         createAdditions();
     }
 
+    private static void getFuncInFuncArgs(String member) {
+        if (!member.startsWith("(") && !member.endsWith(")") && member.contains("(")) {
+            String[] subMembers = member.split("\\(");
+            int operandIndex = subMembers.length - 1;
+            //for (int i = 0; i < subMembers.length; i++)
+
+
+        }
+    }
+
     private static String tryToFindOperator(String member) {
-        if (member.endsWith(";")) return ";";
-        if (member.endsWith(",")) return ",";
-        if (member.endsWith(")")) return ")";
+        for (String operator : new String[]{";", ",", ")"})
+            if (member.endsWith(operator))
+                return operator;
         if (member.startsWith("(")) return "(";
         if (member.endsWith(":"))
             member = member.substring(0, member.length() - 1);
@@ -149,17 +224,20 @@ public class Engine {
     }
 
     private static boolean isMethodCall(String codeLine) {
-        boolean methodNameexists = false;
-        if (!codeLine.contains("(") || !codeLine.contains(")")) return false;
+        boolean methodNameDeclared = false;
+        if (!codeLine.contains("(") || !codeLine.contains(")") || codeLine.contains(" = ")) return false;
         for (String word : codeLine.split(" ")) {
-            if (word.endsWith("(")) methodNameexists = true;
+            if (word.equals("if") || word.equals("for") || word.equals("switch")) return false;
+            if (word.contains("(") || word.endsWith("()")) methodNameDeclared = true;
             if (isBelongsTo(word, methodHeaderSigns)) return false;
         }
-        return methodNameexists;
+        return methodNameDeclared;
     }
 
     private static void getMethodArgs(String codeLine) {
         String[] args = codeLine.substring(codeLine.indexOf('(') + 1, codeLine.lastIndexOf(')')).split(" ");
+        addOperator("(");
+        addOperator(")");
         for (int i = 1; i < args.length; i += 2) {
             String operand = (args[i].charAt(args[i].length() - 1) == ',') ?
                     args[i].substring(0, args[i].length() - 1) : args[i];

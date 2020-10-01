@@ -29,6 +29,7 @@ public class Addition {
         for (Operandor operand : operands) operandQuantity += operand.getQuantity();
         int programLength = operandQuantity + operatorQuantity;
         double programVolume = programLength * (Math.log(programVocabulary) / Math.log(2));
+        programVolume = Math.round(programVolume * 100) / 100.0;
 
         additions.add(new Addition("Operator's Vocabulary (\u03B71)", currentOperatorNumber));
         additions.add(new Addition("Operand's Vocabulary (\u03B72)", currentOperandNumber));
