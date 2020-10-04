@@ -11,8 +11,8 @@ public class Engine {
 
     private static final String[] allOperators = {"+=", "++", "+", "-=", "--", "-", "*=", "*", "/=", "/", "%=", "%",
             "&=", "&&", "&", "|=", "||", "|", "^=", "^", ">>=", ">>", "<<=", "<<", ">>>", "~", "<=", "<", ">=", ">",
-            "!=", "==", "=", ".", ",", ";", "(", ")", "!", "{", "}", "instanceof", "break", "continue", "switch",
-            "if", "do", "while", "for", "return", "?"};
+            "!=", "==", "=", /*".",*/ ",", ";", "(", ")", "!", "{", "}", "instanceof", "break", "continue", "switch",
+            "if", "do", "while", "for", "return", "?", ":"};
 
     private static final String[] otherReservedWords = {"byte", "short", "int", "long", "char", "float", "double",
             "boolean", "else", "case", "default", "try", "catch", "finally", "throw", "throws", "private", "protected",
@@ -36,21 +36,35 @@ public class Engine {
             if (codeLine == null) continue;
 
             /* Распознавание заголовка функции */
-            if (isMethodHeader(codeLine)) {
+            /*if (isMethodHeader(codeLine)) {
                 getHeaderArgs(codeLine);
                 addOperator("{");
                 continue;
-            }
+            }*/
+            boolean isMethodHeader = isMethodHeader(codeLine);
 
             /* Распознавание отдельных слов */
             boolean skip = false;
             String[] lineMembers = codeLine.split(" ");
             for (int i = 0; i < lineMembers.length; i++) {
                 String member = lineMembers[i];
+                if (member.equals("")) continue;
+                if (!isMethodHeader) isMethodHeader = isMethodHeader(codeLine.substring(codeLine.indexOf(member)));
 
                 /* Пропуск слова после instanceof или class */
                 if (skip) {
                     skip = false;
+                    continue;
+                }
+
+                /* Пропуск имени метода */
+                if ((i + 1) < lineMembers.length && lineMembers[i + 1].equals("(") &&
+                    !isBelongsTo(member, allOperators)) continue;
+
+                if (member.equals("(")) {
+                    addOperator("(");
+                    if (isMethodHeader)
+                        skip = true;
                     continue;
                 }
 
@@ -73,7 +87,7 @@ public class Engine {
                 /* Проверка на оператор */
                 if (isBelongsTo(member, allOperators)) {
                     addOperator(member);
-                } else if (isMethodCall(codeLine.substring(codeLine.indexOf(member))) > 0) {}
+                } //else if (isMethodCall(codeLine.substring(codeLine.indexOf(member))) > 0) {}
                 /* //2-я попытка найти оператор в слове
                 else if (!isBelongsTo(member, otherReservedWords) && (operator = tryToFindOperator(member)) != null) {
                     addOperator(operator);
@@ -119,37 +133,6 @@ public class Engine {
         while (codeLine.contains("  "))
             codeLine = codeLine.replaceAll("[ ][ ]", " ");
 
-        /* Обрамление операторов пробелами */
-        for (String word : codeLine.split(" ")) {
-            int start;
-            String prevOperator = "";
-            for (String operator : allOperators) {
-                if (word.equals(operator)) break;
-                start = 0;
-                int index;
-                while ((index = word.indexOf(operator, start)) != -1) {
-                    if (!prevOperator.equals("") && word.indexOf(prevOperator, index) == index) {
-                        start = index + prevOperator.length();
-                        continue;
-                    }
-                    prevOperator = operator;
-                    String oldWord = word;
-                    if (word.startsWith(operator) && word.charAt(operator.length()) != ' ')
-                        word = word.substring(0, operator.length()) + " "
-                                + word.substring(operator.length());
-                    else if (word.endsWith(operator) && word.charAt(word.length() - 1 - operator.length()) != ' ')
-                        word = word.substring(0, index) + " "
-                                + word.substring(index);
-                    else if (!word.startsWith(operator) && !word.endsWith(operator))
-                        word = word.substring(0, index) + " "
-                                + word.substring(index, index + operator.length()) + " "
-                                + word.substring(index + operator.length());
-                    codeLine = codeLine.replace(oldWord, word);
-                    start = index + operator.length() + 1;
-                }
-            }
-        }
-
         /* Добавление всех кавычек и содержимого между ними в операнды и их удаление */
         while (codeLine.contains("\"")) {
             int textBegin = codeLine.indexOf("\"");
@@ -158,10 +141,70 @@ public class Engine {
             codeLine = codeLine.substring(0, textBegin) +
                     codeLine.substring(textEnd);
         }
+
+        /* Обрамление операторов пробелами */
+        int start;
+        String prevOperator = "";
+        int prevIndex = -1;
+        for (String operator : allOperators) {
+            start = 0;
+            int index;
+            while ((index = codeLine.indexOf(operator, start)) != -1) {
+                if (!prevOperator.equals("") && codeLine.indexOf(prevOperator, prevIndex) == index) {
+                    start = index + prevOperator.length();
+                    continue;
+                }
+                prevOperator = operator;
+                prevIndex = index;
+                if (index > 0 && codeLine.charAt(index - 1) != ' ' &&
+                    index + operator.length() < codeLine.length() - 1 &&
+                    codeLine.charAt(index + operator.length()) != ' ')
+                    codeLine = codeLine.substring(0, index) + " " +
+                               codeLine.substring(index, index + operator.length()) + " " +
+                               codeLine.substring(index + operator.length());
+                else if (index > 0 && codeLine.charAt(index - 1) != ' ')
+                    codeLine = codeLine.substring(0, index) + " "
+                             + codeLine.substring(index);
+                else if (index + operator.length() < codeLine.length() &&
+                        codeLine.charAt(index + operator.length()) != ' ')
+                    codeLine = codeLine.substring(0, index + operator.length()) + " " +
+                               codeLine.substring(index + operator.length());
+
+               /* if (codeLine.startsWith(operator) && codeLine.charAt(operator.length()) != ' ')
+                    codeLine = codeLine.substring(0, operator.length()) + " "
+                            + codeLine.substring(operator.length());
+                else if (codeLine.endsWith(operator) && codeLine.charAt(codeLine.length() - 1 - operator.length()) != ' ')
+                    codeLine = codeLine.substring(0, index) + " "
+                            + codeLine.substring(index);
+                else codeLine = codeLine.substring(0, index) + " "
+                            + codeLine.substring(index, index + operator.length()) + " "
+                            + codeLine.substring(index + operator.length());*/
+                start = index + operator.length() + 1;
+            }
+        }
         return codeLine;
     }
 
+
     private static boolean isMethodHeader(String codeLine) {
+        String[] lineMembers = codeLine.split(" ");
+        if (lineMembers.length < 3 || !codeLine.contains("(") || !codeLine.contains(")")) return false;
+        boolean returnTypeDeclared = false,
+                methodNameDeclared = false;
+        for (String member : lineMembers) {
+            if (!member.equals("(") && isBelongsTo(member, allOperators)) return false;
+            if (!isBelongsTo(member, methodHeaderSigns)) {
+                if (!returnTypeDeclared)
+                    returnTypeDeclared = true;
+                else if (!methodNameDeclared)
+                    methodNameDeclared = true;
+                else return member.equals("(");
+            }
+        }
+        return false;
+    }
+
+    /*private static boolean isMethodHeader(String codeLine) {
         String[] lineMembers = codeLine.split(" ");
         if (lineMembers.length < 3 || !codeLine.contains("(") || !codeLine.contains(")")) return false;
         boolean returnTypeDeclared = false,
@@ -192,9 +235,9 @@ public class Engine {
             }
         }
         return true;
-    }
+    }*/
 
-    private static void getHeaderArgs(String codeLine) {
+    /*private static void getHeaderArgs(String codeLine) {
 
     }
 
@@ -227,7 +270,7 @@ public class Engine {
             else if (bracketCount == 0) return 0;
         }
         return -1;
-    }
+    }*/
 
     /*private static boolean isMethodCall(String codeLine) {
         if (!codeLine.contains("(") || !codeLine.contains(")")) return false;
@@ -252,7 +295,7 @@ public class Engine {
         return methodNameDeclared;
     }*/
 
-    private static void getCallArgs(String codeLine) {
+    /*private static void getCallArgs(String codeLine) {
         String[] args = codeLine.substring(codeLine.indexOf('(') + 1, codeLine.lastIndexOf(')')).split(" ");
         addOperator("(");
         addOperator(")");
@@ -273,7 +316,7 @@ public class Engine {
                 i = j;
             } else addOperand(args[i]);
         }
-    }
+    }*/
 
     /*private static String tryToFindOperator(String member) { //todo useless..?
         for (String operator : new String[]{";", ",", ")"})
@@ -286,13 +329,13 @@ public class Engine {
         else return null;
     }*/
 
-    private static void getFuncInFuncArgs(String member) {
+    /*private static void getFuncInFuncArgs(String member) {
         if (!member.startsWith("(") && !member.endsWith(")") && member.contains("(")) {
             String[] subMembers = member.split("\\(");
             int operandIndex = subMembers.length - 1;
             //for (int i = 0; i < subMembers.length; i++)
         }
-    }
+    }*/
 
     private static boolean isBelongsTo(String x, String[] group) {
         for (String groupMember : group)
