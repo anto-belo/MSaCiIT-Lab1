@@ -49,7 +49,7 @@ public class Engine {
                 }
 
                 if ((i + 1) < lineMembers.length && lineMembers[i + 1].equals("(") &&
-                    !isBelongsTo(member, allOperators)) continue;
+                        !isBelongsTo(member, allOperators)) continue;
 
                 if (member.equals("(")) {
                     addOperator("(");
@@ -114,28 +114,19 @@ public class Engine {
                 prevOperator = operator;
                 prevIndex = index;
                 if (index > 0 && codeLine.charAt(index - 1) != ' ' &&
-                    index + operator.length() < codeLine.length() - 1 &&
-                    codeLine.charAt(index + operator.length()) != ' ')
+                        index + operator.length() < codeLine.length() - 1 &&
+                        codeLine.charAt(index + operator.length()) != ' ')
                     codeLine = codeLine.substring(0, index) + " " +
-                               codeLine.substring(index, index + operator.length()) + " " +
-                               codeLine.substring(index + operator.length());
+                            codeLine.substring(index, index + operator.length()) + " " +
+                            codeLine.substring(index + operator.length());
                 else if (index > 0 && codeLine.charAt(index - 1) != ' ')
                     codeLine = codeLine.substring(0, index) + " "
-                             + codeLine.substring(index);
+                            + codeLine.substring(index);
                 else if (index + operator.length() < codeLine.length() &&
                         codeLine.charAt(index + operator.length()) != ' ')
                     codeLine = codeLine.substring(0, index + operator.length()) + " " +
-                               codeLine.substring(index + operator.length());
+                            codeLine.substring(index + operator.length());
 
-               /* if (codeLine.startsWith(operator) && codeLine.charAt(operator.length()) != ' ')
-                    codeLine = codeLine.substring(0, operator.length()) + " "
-                            + codeLine.substring(operator.length());
-                else if (codeLine.endsWith(operator) && codeLine.charAt(codeLine.length() - 1 - operator.length()) != ' ')
-                    codeLine = codeLine.substring(0, index) + " "
-                            + codeLine.substring(index);
-                else codeLine = codeLine.substring(0, index) + " "
-                            + codeLine.substring(index, index + operator.length()) + " "
-                            + codeLine.substring(index + operator.length());*/
                 start = index + operator.length() + 1;
             }
         }
