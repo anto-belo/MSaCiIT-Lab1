@@ -1,2 +1,13 @@
-if ((a > b) && b instanceof String || a <= c)
-String a , String b , String c
+ToDo:
+[R]1. implements
+[R]2. extends
+[R]3. enum
+[R]4. commentaries
+[R]5. assert
+[R]6. class fields
+[R]7. constructor
+8. lambda
+[R]9. do..while (delete while)
+[R]10. do not analyze unused functions
+11. []
+[R]12. foreach

@@ -31,7 +31,14 @@ public class Operandor {
     }
 
     public static void addOperator(String name) {
-        System.out.println("Operator " + name + " added.");
+        if (name.equals("(")) name = "(...)";
+        if (name.equals("{")) name = "{...}";
+        if (name.equals("switch")) name = "switch..case";
+        if (name.equals("if")) name = "if..else";
+        if (name.equals("do")) name = "do..while";
+        if (name.equals("?")) name = "?..:";
+
+        if (name.equals(")") || name.equals("}")) return;
         for (Operandor operator : operators)
             if (name.equals(operator.name)) {
                 operator.quantity++;
@@ -41,7 +48,6 @@ public class Operandor {
     }
 
     public static void addOperand(String name) {
-        System.out.println("Operand " + name + " added.");
         for (Operandor operand : operands)
             if (name.equals(operand.name)) {
                 operand.quantity++;
