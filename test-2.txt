@@ -1,0 +1,166 @@
+public class Main {
+    static boolean work = false;
+
+    public static void main(String[] args) {
+        System.out.println("start");
+        for (int i = 0; i < 50; i++) {
+            System.out.println("hello world");
+        }
+
+        work = changeWord(work);
+        if (work) {
+            System.out.println("pogram is working");
+            calculate();
+            cycleFor();
+            cycleWhile();
+            cycleDoWhile();
+            switchCase();
+            ternarOperator();
+        } else {
+            System.out.println("maybe it is working");
+            calculate();
+            cycleFor();
+            cycleWhile();
+            cycleDoWhile();
+            switchCase();
+            ternarOperator();
+        }
+    }
+
+    public static void calculate() {
+        System.out.println("count sum");
+        int a = 5 + 3;
+        int b = 5, c;
+        c = a + b;
+        System.out.println("result for calculation");
+        System.out.println(c);
+    }
+
+    public static void cycleFor() {
+        System.out.println("count for");
+        for (int i = 0; i < 100; i++) {
+            if (i % 2 == 0)
+                System.out.println(i);
+            else continue;
+        }
+        System.out.println("end of the cycle");
+    }
+
+    public static void cycleWhile() {
+        System.out.println("count while");
+        int i = 0;
+        while (i < 100) {
+            i++;
+            if (i % 2 == 0)
+                System.out.println(i);
+            else continue;
+        }
+        System.out.println("end of the cycle");
+    }
+
+    public static void cycleDoWhile() {
+        System.out.println("count do while");
+        int i = 0;
+        do {
+            i++;
+            if (i % 2 == 0)
+                System.out.println(i);
+            else continue;
+        } while (i < 100);
+        System.out.println("end of the cycle");
+    }
+
+    public static void switchCase() {
+        System.out.println("count switchCase");
+        int f = 5;
+        switch (f) {
+            case 1:
+                System.out.println(f);
+                break;
+
+            case 2:
+                f++;
+                System.out.println(f);
+                break;
+
+            case 3:
+                f--;
+                System.out.println(f);
+                break;
+
+            case 4:
+                f *= 2;
+                System.out.println(f);
+
+            default:
+                if (f > 0)
+                    System.out.println("f > 0");
+                else System.out.println(" f < 0");
+        }
+
+        int a = 5;
+        int c = 2;
+        boolean b = true;
+        boolean flag = true;
+
+        switch (c) {
+            case 0: {
+                a = (b) ? 3 : (c == 3) ? 2 : 1;
+                flag = true;
+                break;
+            }
+            case 1:
+            case 2: {
+                flag = true;
+                System.out.println("WOW!");
+                break;
+            }
+            case 3: {
+                System.out.println("WOW! x 3");
+                break;
+            }
+            default: {
+                for (int i = 0; i < 5; i++)
+                    System.out.println("Ugh");
+            }
+
+            System.out.println("end of switchCase");
+        }
+    }
+
+    public static void ternarOperator() {
+        System.out.println("count ternar operator");
+        int f = (work) ? 5 : 3;
+        System.out.println(f);
+        int c = (f > 0) ? 3 : 5;
+        System.out.println(c);
+        System.out.println("end of ternar operator");
+    }
+
+    public static void useless() {
+        int a = 10;
+        int b = 20;
+        int c = 20;
+        int i = 20;
+        String S = "Test";
+        System.out.println("a + b = " + (a + b));
+        System.out.println(S);
+        if (a == c) {
+            a = c;
+        }
+        while (a == 0) {
+            i++;
+            if (a > 0)
+                a--;
+            if (a < 0)
+                a++;
+        }
+    }
+
+    public static boolean changeWord(Boolean work) {
+        if (work)
+            work = false;
+        else work = true;
+        return work;
+    }
+}
